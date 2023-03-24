@@ -1,3 +1,4 @@
+using System.Net.Mime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using DevEventsApi.Persistence;
@@ -9,7 +10,7 @@ namespace DevEventsApi.Controllers;
 
 [ApiController]
 [Route("api/v1/events")]
-[Produces("application/json")]
+[Produces(MediaTypeNames.Application.Json)]
 public class EventsController : ControllerBase
 {
   private readonly DatabaseContext context;
@@ -66,8 +67,10 @@ public class EventsController : ControllerBase
   /// <param name="model">Event's creating data</param>
   /// <returns>Newly Created Event</returns>
   /// <response code="201">Success</response>
+  /// <response code="400">Event's Data Invalid</response>
   [HttpPost]
   [ProducesResponseType(typeof(Event), StatusCodes.Status201Created)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> Create(CreateEventViewModel model)
   {
     var register = new Event()
@@ -92,9 +95,11 @@ public class EventsController : ControllerBase
   /// <returns></returns>
   /// <response code="204">Success</response>
   /// <response code="404">Event Not Found</response>
+  /// <response code="400">Event's Data Invalid</response>
   [HttpPut("{uid}")]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> Update(Guid uid, UpdateEventViewModel model)
   {
     var register = await context.Events.SingleOrDefaultAsync(e => e.Uid.Equals(uid));
@@ -144,9 +149,11 @@ public class EventsController : ControllerBase
   /// <returns>Newly Created Speaker</returns>
   /// <response code="201">Success</response>
   /// <response code="404">Not Found</response>
+  /// <response code="400">Event's data invalid</response>
   [HttpPost("{uid}/speakers")]
   [ProducesResponseType(StatusCodes.Status201Created)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> CreateSpeaker(Guid uid, CreateEventSpeakerViewModel model)
   {
     var register = await context.Events.SingleOrDefaultAsync(e => e.Uid.Equals(uid));
@@ -159,6 +166,7 @@ public class EventsController : ControllerBase
     {
       EventUid = register.Uid,
       Name = model.Name,
+      Email = model.Email,
       TalkTitle = model.TalkTitle,
       TalkDescription = model.TalkDescription,
       LinkedInProfile = model.LinkedInProfile
@@ -171,6 +179,7 @@ public class EventsController : ControllerBase
     {
       speaker.Uid,
       speaker.Name,
+      speaker.Email,
       speaker.TalkTitle,
       speaker.TalkDescription,
       speaker.LinkedInProfile

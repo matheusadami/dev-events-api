@@ -1,8 +1,9 @@
 using System.Reflection;
-using DevEventsApi.Persistence;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using DevEventsApi.Extensions;
+using DevEventsApi.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,19 +17,20 @@ ConfigureSwagger(builder);
 
 var app = builder.Build();
 
+if (app.Environment.IsProduction())
+{
+  app.UseHttpsRedirection();
+}
+
+// Use a custom middleware
+app.UseLogger();
+app.MapControllers();
+
 if (app.Environment.IsDevelopment())
 {
   app.UseSwagger();
   app.UseSwaggerUI();
 }
-else
-{
-  app.UseHttpsRedirection();
-}
-
-app.UseAuthorization();
-
-app.MapControllers();
 
 app.Run();
 
