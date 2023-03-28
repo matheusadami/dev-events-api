@@ -1,6 +1,7 @@
 using System.Net.Mime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using DevEventsApi.Persistence;
 using DevEventsApi.Entities;
 using DevEventsApi.ViewModels.Event;
@@ -9,6 +10,7 @@ using DevEventsApi.ViewModels.EventSpeaker;
 namespace DevEventsApi.Controllers;
 
 [ApiController]
+[Tags("Eventos")]
 [Route("api/v1/events")]
 [Produces(MediaTypeNames.Application.Json)]
 public class EventsController : ControllerBase
@@ -16,9 +18,7 @@ public class EventsController : ControllerBase
   private readonly DatabaseContext context;
 
   public EventsController(DatabaseContext context)
-  {
-    this.context = context;
-  }
+    => this.context = context;
 
   /// <summary>
   /// Get all events from database.
@@ -26,7 +26,9 @@ public class EventsController : ControllerBase
   /// <returns>Events' List</returns>
   /// <response code="200">Success</response>
   [HttpGet]
+  [Authorize(Roles = "CEO")]
   [ProducesResponseType(typeof(List<Event>), StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   public async Task<IActionResult> GetAll()
   {
     var events = await context.Events
@@ -45,8 +47,10 @@ public class EventsController : ControllerBase
   /// <response code="200">Success</response>
   /// <response code="404">Event Not Found</response>
   [HttpGet("{uid}")]
+  [Authorize]
   [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   public async Task<IActionResult> GetByUid(Guid uid)
   {
     var response = await context.Events
@@ -69,16 +73,19 @@ public class EventsController : ControllerBase
   /// <response code="201">Success</response>
   /// <response code="400">Event's Data Invalid</response>
   [HttpPost]
+  [Authorize(Roles = "Manager,CEO")]
   [ProducesResponseType(typeof(Event), StatusCodes.Status201Created)]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
-  public async Task<IActionResult> Create(CreateEventViewModel model)
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+  public async Task<IActionResult> Create([FromForm] CreateEventViewModel model)
   {
     var register = new Event()
     {
       Title = model.Title,
       Description = model.Description,
       InitialDate = model.InitialDate,
-      FinalDate = model.FinalDate
+      FinalDate = model.FinalDate,
+      UserUid = model.UserId
     };
 
     await context.Events.AddAsync(register);
@@ -97,10 +104,12 @@ public class EventsController : ControllerBase
   /// <response code="404">Event Not Found</response>
   /// <response code="400">Event's Data Invalid</response>
   [HttpPut("{uid}")]
+  [Authorize(Roles = "Manager,CEO")]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
-  public async Task<IActionResult> Update(Guid uid, UpdateEventViewModel model)
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+  public async Task<IActionResult> Update(Guid uid, [FromForm] UpdateEventViewModel model)
   {
     var register = await context.Events.SingleOrDefaultAsync(e => e.Uid.Equals(uid));
     if (register is null)
@@ -124,8 +133,10 @@ public class EventsController : ControllerBase
   /// <response code="204">Success</response>
   /// <response code="404">Not Found</response>
   [HttpDelete("{uid}")]
+  [Authorize(Roles = "CEO")]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   public async Task<IActionResult> Delete(Guid uid)
   {
     var register = await context.Events.SingleOrDefaultAsync(e => e.Uid.Equals(uid));
@@ -151,10 +162,12 @@ public class EventsController : ControllerBase
   /// <response code="404">Not Found</response>
   /// <response code="400">Event's data invalid</response>
   [HttpPost("{uid}/speakers")]
+  [Authorize(Roles = "Manager,CEO")]
   [ProducesResponseType(StatusCodes.Status201Created)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
-  public async Task<IActionResult> CreateSpeaker(Guid uid, CreateEventSpeakerViewModel model)
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+  public async Task<IActionResult> CreateSpeaker(Guid uid, [FromForm] CreateEventSpeakerViewModel model)
   {
     var register = await context.Events.SingleOrDefaultAsync(e => e.Uid.Equals(uid));
     if (register is null)

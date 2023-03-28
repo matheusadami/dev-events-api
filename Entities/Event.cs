@@ -11,5 +11,9 @@ public class Event
   public DateTime CreateAt { get; set; } = DateTime.UtcNow;
   public DateTime? DeleteAt { get; set; }
 
+  public Guid UserUid { get; set; }
+
+  public User? User { get; set; }
+
   public List<EventSpeaker> Speakers { get; set; } = new();
 }
