@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Net.Mime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +34,7 @@ public class EventsController : ControllerBase
   {
     var events = await context.Events
       .Include(e => e.Speakers.OrderBy(s => s.Name))
-      .Where(e => !e.DeleteAt.HasValue)
+      .Where(e => !e.DeletedAt.HasValue)
       .ToListAsync();
 
     return Ok(events);
@@ -145,7 +146,7 @@ public class EventsController : ControllerBase
       return NotFound();
     }
 
-    register.DeleteAt = DateTime.UtcNow;
+    register.DeletedAt = DateTime.UtcNow;
 
     await context.SaveChangesAsync();
 

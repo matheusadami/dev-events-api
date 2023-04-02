@@ -9,6 +9,8 @@ using DevEventsApi.Extensions;
 using DevEventsApi.Persistence;
 using DevEventsApi.Services.Interfaces;
 using DevEventsApi.Services;
+using DevEventsApi.Config;
+using DevEventsApi.Persistence.Interceptors;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigureServices(builder);
@@ -21,6 +23,7 @@ app.Run();
 
 void ConfigureServices(WebApplicationBuilder builder)
 {
+  builder.Services.AddHttpContextAccessor();
   builder.Services.AddControllers().AddJsonOptions(
     opts =>
     {
@@ -28,20 +31,26 @@ void ConfigureServices(WebApplicationBuilder builder)
       opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     }
   );
-
+  ConfigureDatabase(builder);
   ConfigureAuthScheme(builder);
-
-  builder.Services.AddDbContext<DatabaseContext>(
-    opts => opts.UseSqlite(builder.Configuration.GetConnectionString("Database"))
-  );
-
   builder.Services.AddEndpointsApiExplorer();
   builder.Services.AddSingleton<ITokenService, TokenService>();
+  builder.Services.Configure<AuthSettings>(builder.Configuration.GetSection(AuthSettings.Key));
+}
+
+void ConfigureDatabase(WebApplicationBuilder builder)
+{
+  // Interceptors
+  builder.Services.AddSingleton<AuditableEntitiesInterceptor>();
+
+  // Database Context
+  builder.Services.AddDbContext<DatabaseContext>();
 }
 
 void ConfigureAuthScheme(WebApplicationBuilder builder)
 {
-  var key = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWT:SecretKey"));
+  var authSettings = builder.Configuration.GetSection(AuthSettings.Key).Get<AuthSettings>();
+  var key = Encoding.ASCII.GetBytes(authSettings.JWTSecretKey);
 
   builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   .AddJwtBearer(

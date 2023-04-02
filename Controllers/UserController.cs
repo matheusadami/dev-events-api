@@ -18,9 +18,9 @@ public class UserController : Controller
   public UserController(ITokenService tokenService, DatabaseContext databaseContext)
   => (this.tokenService, this.context) = (tokenService, databaseContext);
 
-  public DatabaseContext context { get; set; }
+  private DatabaseContext context { get; set; }
 
-  public ITokenService tokenService { get; set; }
+  private ITokenService tokenService { get; set; }
 
   /// <summary>
   /// Generate a new auth token for being used to the API endpoints.
@@ -67,7 +67,7 @@ public class UserController : Controller
   public async Task<IActionResult> GetAll()
   {
     var users = await context.Users
-        .Include(e => e.Events.OrderBy(e => e.CreateAt))
+        .Include(e => e.Events.OrderBy(e => e.CreatedAt))
         .ToListAsync();
 
     return Ok(users);
