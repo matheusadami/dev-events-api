@@ -1,7 +1,6 @@
 using System.Text;
 using System.Reflection;
 using Microsoft.OpenApi.Models;
-using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -31,11 +30,16 @@ void ConfigureServices(WebApplicationBuilder builder)
       opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     }
   );
+
   ConfigureDatabase(builder);
   ConfigureAuthScheme(builder);
+
   builder.Services.AddEndpointsApiExplorer();
   builder.Services.AddSingleton<ITokenService, TokenService>();
+  builder.Services.AddSingleton<IHasherService, HasherService>();
+
   builder.Services.Configure<AuthSettings>(builder.Configuration.GetSection(AuthSettings.Key));
+  builder.Services.Configure<HashingSettings>(builder.Configuration.GetSection(HashingSettings.Key));
 }
 
 void ConfigureDatabase(WebApplicationBuilder builder)

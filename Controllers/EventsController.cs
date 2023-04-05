@@ -7,6 +7,7 @@ using DevEventsApi.Persistence;
 using DevEventsApi.Entities;
 using DevEventsApi.ViewModels.Event;
 using DevEventsApi.ViewModels.EventSpeaker;
+using DevEventsApi.Helpers;
 
 namespace DevEventsApi.Controllers;
 
@@ -80,13 +81,14 @@ public class EventsController : ControllerBase
   [ProducesResponseType(StatusCodes.Status401Unauthorized)]
   public async Task<IActionResult> Create([FromForm] CreateEventViewModel model)
   {
+    var userIdentifier = AuthorizeHelper.GetUserIdentifierOrError(HttpContext);
     var register = new Event()
     {
       Title = model.Title,
       Description = model.Description,
       InitialDate = model.InitialDate,
       FinalDate = model.FinalDate,
-      UserUid = model.UserId
+      UserUid = new Guid(userIdentifier)
     };
 
     await context.Events.AddAsync(register);

@@ -31,10 +31,4 @@ public class CreateEventViewModel
   [Required(ErrorMessage = "Informe a data final do evento")]
   [DataType(DataType.DateTime)]
   public DateTime FinalDate { get; set; }
-
-  /// <summary>
-  /// Código do usuário responsável pelo evento
-  /// </summary>
-  [Required(ErrorMessage = "Informe o código de identificação (Uid) do usuário responsável pelo evento")]
-  public Guid UserId { get; set; }
 }

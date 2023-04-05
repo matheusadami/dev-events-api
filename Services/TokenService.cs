@@ -24,6 +24,7 @@ public class TokenService : ITokenService
     {
       Subject = new ClaimsIdentity(new Claim[]
         {
+          new Claim(AuthSettings.UserIdentifierClaimTypeName, user.Uid.ToString()),
           new Claim(ClaimTypes.Name, user.Name),
           new Claim(ClaimTypes.NameIdentifier, user.Username),
           new Claim(ClaimTypes.Role, user.Role.ToString())

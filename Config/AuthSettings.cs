@@ -1,7 +1,12 @@
 namespace DevEventsApi.Config;
 
-public class AuthSettings
+public sealed class AuthSettings
 {
+
   public const string Key = "AuthSettings";
+
+  public const string UserIdentifierClaimTypeName = "UserIdentifier";
+
+
   public string JWTSecretKey { get; set; } = string.Empty;
 }

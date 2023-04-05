@@ -15,12 +15,14 @@ namespace DevEventsApi.Controllers;
 [Produces(MediaTypeNames.Application.Json)]
 public class UserController : Controller
 {
-  public UserController(ITokenService tokenService, DatabaseContext databaseContext)
-  => (this.tokenService, this.context) = (tokenService, databaseContext);
+  public UserController(IHasherService hasherService, ITokenService tokenService, DatabaseContext databaseContext)
+  => (this.hasherService, this.tokenService, this.context) = (hasherService, tokenService, databaseContext);
 
   private DatabaseContext context { get; set; }
 
   private ITokenService tokenService { get; set; }
+
+  private IHasherService hasherService { get; set; }
 
   /// <summary>
   /// Generate a new auth token for being used to the API endpoints.
@@ -30,23 +32,28 @@ public class UserController : Controller
   /// <returns code="200">Success</returns>
   /// <returns code="400">Bad request</returns>
   [HttpPost("generate-token")]
-  [ProducesResponseType(typeof(ResponseGenerateTokenViewModel), StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status200OK)]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> GenerateToken(GenerateTokenViewModel model)
   {
     try
     {
       var user = await context.Users
-        .SingleOrDefaultAsync(e => e.Username.Equals(model.Username) && e.Password.Equals(model.Password));
+        .Where(e => e.Username.Equals(model.Username))
+        .FirstOrDefaultAsync();
 
       if (user is null)
-        throw new Exception("Username ou senha inválidos.");
+        throw new Exception("Username inválido.");
+
+      var isValidHash = hasherService.Verify(user.Password, model.Password);
+      if (!isValidHash)
+        throw new Exception("Senha inválida.");
 
       var token = tokenService.GenerateToken(user);
 
-      return Ok(new ResponseGenerateTokenViewModel
+      return Ok(new
       {
-        User = user,
+        User = new { user.Uid, user.Username, user.Name, user.Role },
         Token = token
       });
     }
@@ -68,6 +75,7 @@ public class UserController : Controller
   {
     var users = await context.Users
         .Include(e => e.Events.OrderBy(e => e.CreatedAt))
+        .Select(e => new User { Uid = e.Uid, Name = e.Name, Username = e.Username, Role = e.Role, CreatedAt = e.CreatedAt, UpdatedAt = e.UpdatedAt })
         .ToListAsync();
 
     return Ok(users);
@@ -95,8 +103,9 @@ public class UserController : Controller
         Name = model.Name,
         Role = model.Role,
         Username = model.Username,
-        Password = model.Password
+        Password = hasherService.Hash(model.Password)
       };
+
       await context.Users.AddAsync(user);
       await context.SaveChangesAsync();
 
