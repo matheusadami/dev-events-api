@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-
 namespace DevEventsApi.Entities;
 
 public class Auditing

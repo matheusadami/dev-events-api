@@ -41,10 +41,9 @@ public class AuditableEntitiesInterceptor : SaveChangesInterceptor
   {
     var auditingEntries = new List<Auditing>();
 
-    // Get all auditable entities
-    var entries = context.ChangeTracker.Entries<IAuditable>();
+    var auditableEntries = context.ChangeTracker.Entries<IAuditable>();
 
-    foreach (var entityEntry in entries)
+    foreach (var entityEntry in auditableEntries)
     {
       if (allowedEntityStatesForTracking.Contains(entityEntry.State))
       {
